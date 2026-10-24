@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Empréstimo Consignado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 30px 15px;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px #0001;
+    }
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      color: #0f766e;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 7px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      border: none;
+      border-radius: 8px;
+      background: #0f766e;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #115e59;
+    }
+
+    #resultado {
+      display: none;
+      margin-top: 25px;
+      padding: 18px;
+      background: #f0fdfa;
+      border-radius: 10px;
+    }
+
+    .linha {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 13px 0;
+    }
+
+    .valor {
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .destaque {
+      color: #0f766e;
+      font-size: 22px;
+    }
+
+    .aviso {
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Simulador de Consignado</h1>
+    <p>Informe os dados do empréstimo:</p>
+
+    <form id="formulario">
+      <label for="valor">Valor do empréstimo (R$)</label>
+      <input id="valor" type="number" min="0.01"
+             step="0.01" value="5000" required>
+
+      <label for="taxa">Juros mensais (%)</label>
+      <input id="taxa" type="number" min="0"
+             step="0.01" value="1.8" required>
+
+      <label for="parcelas">Quantidade de parcelas</label>
+      <input id="parcelas" type="number" min="1"
+             max="120" step="1" value="24" required>
+
+      <button type="submit">Simular empréstimo</button>
+    </form>
+
+    <section id="resultado" aria-live="polite">
+      <h2>Resultado da simulação</h2>
+
+      <div class="linha">
+        <span>Valor solicitado</span>
+        <span class="valor" id="rValor"></span>
+      </div>
+
+      <div class="linha">
+        <span>Parcela mensal</span>
+        <span class="valor destaque" id="rParcela"></span>
+      </div>
+
+      <div class="linha">
+        <span>Total de juros</span>
+        <span class="valor" id="rJuros"></span>
+      </div>
+
+      <div class="linha">
+        <span>Total a pagar</span>
+        <span class="valor" id="rTotal"></span>
+      </div>
+    </section>
+
+    <p class="aviso">
+      Simulação educativa pelo sistema Price. Não inclui necessariamente
+      IOF, seguros, tarifas ou outros custos. Consulte o CET da instituição
+      financeira antes de contratar.
+    </p>
+  </main>
+
+  <script>
+    const formulario = document.getElementById("formulario");
+    const resultado = document.getElementById("resultado");
+
+    const dinheiro = valor =>
+      valor.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+
+    formulario.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const valor = Number(document.getElementById("valor").value);
+      const taxa = Number(document.getElementById("taxa").value) / 100;
+      const parcelas = Number(document.getElementById("parcelas").value);
+
+      if (
+        !Number.isFinite(valor) ||
+        !Number.isFinite(taxa) ||
+        !Number.isInteger(parcelas) ||
+        valor <= 0 || taxa < 0 ||
+        parcelas < 1 || parcelas > 120
+      ) {
+        alert("Confira os valores informados.");
+        return;
+      }
+
+      let prestacao;
+
+      if (taxa === 0) {
+        prestacao = valor / parcelas;
+      } else {
+        const fator = Math.pow(1 + taxa, parcelas);
+        prestacao = valor * (taxa * fator) / (fator - 1);
+      }
+
+      // Arredonda a parcela para centavos.
+      prestacao = Math.round((prestacao + Number.EPSILON) * 100) / 100;
+
+      const total = prestacao * parcelas;
+      const juros = total - valor;
+
+      document.getElementById("rValor").textContent =
+        dinheiro(valor);
+      document.getElementById("rParcela").textContent =
+        dinheiro(prestacao);
+      document.getElementById("rJuros").textContent =
+        dinheiro(juros);
+      document.getElementById("rTotal").textContent =
+        dinheiro(total);
+
+      resultado.style.display = "block";
+    });
+  </script>
+</body>
+</html>
